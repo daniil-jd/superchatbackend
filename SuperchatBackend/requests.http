@@ -1,0 +1,58 @@
+POST http://localhost:8080/api/registration
+Content-Type: application/json
+
+{
+  "username": "username",
+  "password": null
+}
+
+###
+
+POST http://localhost:8080/api/registration
+Content-Type: application/json
+
+{
+  "username": "mailfrreg1@mail.ru",
+  "password": "password"
+}
+
+###
+
+GET http://localhost:8080/api/registration/confirmation?token=03de88de-627f-499a-b2b2-611db20dcc9d
+Accept: application/json
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+  client.global.set("auth_token", response.body.authenticationToken)
+});
+%}
+
+###
+
+POST http://localhost:8080/api/authentication
+Content-Type: application/json
+
+{
+  "username": "mailfrreg@mail.ru",
+  "password": "password"
+}
+
+###
+GET http://localhost:8080/api/rooms
+Accept: application/json
+X-Chat-Token: 07fba718-b9f4-4256-9690-74bc54d79c00
+
+###
+POST http://localhost:8080/api/rooms
+Content-Type: application/json
+X-Chat-Token: 9411f233-91a4-48d1-8cad-85b5286aaef7
+
+{
+  "name": "chat#1",
+  "members": [
+    "mailfrreg1@mail.ru", "mailfrreg@mail.ru"
+  ]
+}
+
+###
