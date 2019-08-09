@@ -41,6 +41,7 @@ public class DefaultSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/recovery", "/api/recovery/confirmation*").anonymous()
                 .antMatchers(HttpMethod.GET, "/*").anonymous()
 
+                .antMatchers("/api/iwschat").authenticated()
                 .antMatchers("/api/rooms").authenticated()
                 .antMatchers("/api/profile").authenticated()
                 .antMatchers("/api/**").hasRole("USER")

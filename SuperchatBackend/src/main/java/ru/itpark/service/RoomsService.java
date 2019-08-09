@@ -11,6 +11,7 @@ import ru.itpark.entity.chat.MemberEntity;
 import ru.itpark.entity.chat.RoomEntity;
 import ru.itpark.exception.ChatRoomAlreadyExist;
 import ru.itpark.exception.EmptyChatMembersException;
+import ru.itpark.exception.RoomNotFindException;
 import ru.itpark.exception.UserDoesNotExist;
 import ru.itpark.repository.MemberRepository;
 import ru.itpark.repository.RoomsRepository;
@@ -18,6 +19,7 @@ import ru.itpark.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,5 +59,9 @@ public class RoomsService {
         var memberEntity = memberRepository.findByChatUser(creator);
 
         roomsRepository.save(new RoomEntity(0, chatRoomRequestDto.getName(), null, memberEntity, members));
+    }
+
+    public Optional<RoomEntity> findRoomByName(String roomName) {
+        return roomsRepository.findByName(roomName);
     }
 }
