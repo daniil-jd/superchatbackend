@@ -39,16 +39,6 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 //    return container;
 //  }
 
-
-    @Bean
-    public ServerEndpointRegistration serverEndpointRegistration(InheritedEndpoint endpoint) {
-        System.out.println("config iwschat");
-        var registration = new ServerEndpointRegistration("/apis/iwschat", endpoint);
-        registration.setEncoders(List.of(MessageDtoEncoderDecoder.class));
-        registration.setDecoders(List.of(MessageDtoEncoderDecoder.class));
-        return registration;
-    }
-
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
         var exporter = new ServerEndpointExporter();

@@ -3,7 +3,10 @@ package ru.itpark.entity.chat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.itpark.dto.chat.room.MemberDto;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import ru.itpark.dto.chat.room.UserDto;
+import ru.itpark.entity.UserEntity;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,7 +14,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.ArrayList;
@@ -30,13 +32,14 @@ public class RoomEntity {
     private String name;
     private String icon;
     @OneToOne
-    private MemberEntity creator;
-    @ManyToMany(fetch = FetchType.LAZY)
-    private List<MemberEntity> members = new ArrayList<>();
+    private UserEntity creator;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<UserEntity> users = new ArrayList<>();
 
-    public List<MemberDto> getMembersDto() {
-        return members.stream()
-                .map(m -> new MemberDto(m.getChatUser().getUsername()))
+    public List<UserDto> getUsersDto() {
+        return users.stream()
+                .map(m -> new UserDto(m.getUsername()))
                 .collect(Collectors.toList());
     }
 }

@@ -14,5 +14,5 @@ import java.util.Set;
 public class ChatRoomRequestDto {
    @NotNull
    private String name;
-   private Set<MemberDto> members = new HashSet<>();
+   private Set<UserDto> members = new HashSet<>();
 }

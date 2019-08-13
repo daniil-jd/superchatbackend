@@ -4,16 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itpark.dto.chat.room.ChatRoomRequestDto;
-import ru.itpark.dto.chat.room.MemberDto;
+import ru.itpark.dto.chat.room.UserDto;
 import ru.itpark.dto.chat.room.RoomsResponseDto;
 import ru.itpark.entity.UserEntity;
-import ru.itpark.entity.chat.MemberEntity;
 import ru.itpark.entity.chat.RoomEntity;
 import ru.itpark.exception.ChatRoomAlreadyExist;
 import ru.itpark.exception.EmptyChatMembersException;
 import ru.itpark.exception.RoomNotFindException;
 import ru.itpark.exception.UserDoesNotExist;
-import ru.itpark.repository.MemberRepository;
 import ru.itpark.repository.RoomsRepository;
 import ru.itpark.repository.UserRepository;
 
@@ -26,14 +24,12 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class RoomsService {
-    private final MemberRepository memberRepository;
     private final RoomsRepository roomsRepository;
     private final UserRepository userRepository;
 
     public List<RoomsResponseDto> getAllMemberRooms(UserEntity userEntity) {
-        var memberEntity = memberRepository.findByChatUser(userEntity);
-        return roomsRepository.findAllByMembers(memberEntity).stream()
-                .map(r -> new RoomsResponseDto(r.getName(), r.getIcon(), new MemberDto(r.getCreator().getChatUser().getUsername()), r.getMembersDto()))
+        return roomsRepository.findAllByUsers(userEntity).stream()
+                .map(r -> new RoomsResponseDto(r.getName(), r.getIcon(), new UserDto(r.getCreator().getUsername()), r.getUsersDto()))
                 .collect(Collectors.toList());
     }
 
@@ -42,12 +38,12 @@ public class RoomsService {
             throw new ChatRoomAlreadyExist(String.format("Chat room with name '%s' already exist", chatRoomRequestDto.getName()));
         }
 
-        List<MemberEntity> members = new ArrayList<>();
+        List<UserEntity> users = new ArrayList<>();
         if (chatRoomRequestDto.getMembers() != null && chatRoomRequestDto.getMembers().size() > 0) {
-            for (MemberDto member : chatRoomRequestDto.getMembers()) {
+            for (UserDto member : chatRoomRequestDto.getMembers()) {
                 var userEntity = userRepository.findByUsername(member.getUsername());
                 if (userEntity.isPresent()) {
-                    members.add(memberRepository.findByChatUser(userEntity.get()));
+                    users.add(userEntity.get());
                 } else {
                     throw new UserDoesNotExist(member.getUsername());
                 }
@@ -56,12 +52,24 @@ public class RoomsService {
             throw new EmptyChatMembersException();
         }
 
-        var memberEntity = memberRepository.findByChatUser(creator);
-
-        roomsRepository.save(new RoomEntity(0, chatRoomRequestDto.getName(), null, memberEntity, members));
+        roomsRepository.save(new RoomEntity(0, chatRoomRequestDto.getName(), null, creator, users));
     }
 
-    public Optional<RoomEntity> findRoomByName(String roomName) {
-        return roomsRepository.findByName(roomName);
+    public List<UserEntity> findUsersInRoomByRoomName(String roomName) {
+        var room = roomsRepository.findByName(roomName);
+        if (!room.isPresent()) {
+            throw new RoomNotFindException();
+        }
+        return new ArrayList<>(room.get().getUsers());
     }
+
+    public RoomEntity findByRoomName(String name) {
+        var room = roomsRepository.findByName(name);
+        if (!room.isPresent()) {
+            throw new RoomNotFindException();
+        }
+        return room.get();
+    }
+
+
 }

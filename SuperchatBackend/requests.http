@@ -53,12 +53,12 @@ X-Chat-Token: 2db1b4c4-5abb-4782-a064-80ac82935979
 ###
 POST http://localhost:8080/api/rooms
 Content-Type: application/json
-X-Chat-Token: ac7e8581-1b76-4e48-865b-f5f6a91ddcc0
+X-Chat-Token: eb00a7e7-d4ef-4fb7-8a6b-d0e446c4f7cb
 
 {
-  "name": "chat#2",
+  "name": "chat#3",
   "members": [
-    "mailfrreg1@mail.ru", "u3@mail.ru"
+    "mailfrreg1@mail.ru", "mailfrreg@mail.ru"
   ]
 }
 

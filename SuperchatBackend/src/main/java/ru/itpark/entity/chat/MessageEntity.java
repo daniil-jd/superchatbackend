@@ -11,7 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "chat_message")
@@ -25,8 +25,8 @@ public class MessageEntity {
     @OneToOne
     private RoomEntity room;
     @OneToOne
-    private MemberEntity author;
+    private UserEntity author;
     private String content;
-    private LocalDateTime created;
+    private OffsetDateTime created;
     private MessageStatus status;
 }
