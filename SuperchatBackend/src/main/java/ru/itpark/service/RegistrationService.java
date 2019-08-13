@@ -6,13 +6,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.itpark.dto.AuthenticationTokenResponseDto;
 import ru.itpark.dto.RegistrationRequestDto;
-import ru.itpark.entity.chat.MemberEntity;
 import ru.itpark.entity.token.AuthenticationTokenEntity;
 import ru.itpark.entity.token.RegistrationTokenEntity;
 import ru.itpark.entity.UserEntity;
 import ru.itpark.exception.*;
 import ru.itpark.repository.AuthenticationTokenRepository;
-import ru.itpark.repository.MemberRepository;
 import ru.itpark.repository.RegistrationTokenRepository;
 import ru.itpark.repository.UserRepository;
 
@@ -28,7 +26,6 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final DefaultMailService mailService;
     private final AuthenticationTokenRepository authenticationTokenRepository;
-    private final MemberRepository memberRepository;
 
     private final String ROLE_USER = "ROLE_USER";
 
@@ -59,8 +56,6 @@ public class RegistrationService {
 
             //mail send to user
             mailService.sendRegistrationToken("mailfrreg@yandex.ru", user.getUsername(), tokenValue);
-            //create chat user
-            memberRepository.save(new MemberEntity(0, null, user));
         } else {
             if (userOptional.get().isEnabled()) {
                 throw new UsernameAlreadyExistsException(dto.getUsername());
@@ -80,8 +75,6 @@ public class RegistrationService {
 
             //mail token send
             mailService.sendRegistrationToken("mailfrreg@yandex.ru", userOptional.get().getUsername(), tokenValue);
-            //create chat user
-            memberRepository.save(new MemberEntity(0, null, userOptional.get()));
         }
 
 

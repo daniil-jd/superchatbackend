@@ -9,10 +9,18 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import ru.itpark.dto.chat.message.MessageDto;
-import ru.itpark.dto.chat.room.MemberDto;
-import ru.itpark.exception.RoomNotFindException;
+import ru.itpark.entity.UserEntity;
+import ru.itpark.entity.chat.MessageEntity;
+import ru.itpark.entity.chat.MessageStatus;
+import ru.itpark.service.MessageService;
 import ru.itpark.service.RoomsService;
+import ru.itpark.service.UserService;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +30,8 @@ public class WSHandler implements WebSocketHandler {
     private ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
     private final ObjectMapper mapper;
     private final RoomsService roomsService;
+    private final MessageService messageService;
+    private final UserService userService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession webSocketSession) throws Exception {
@@ -34,35 +44,49 @@ public class WSHandler implements WebSocketHandler {
     // Jackson -> marshalling/unmarshalling
     @Override
     public void handleMessage(WebSocketSession webSocketSession, WebSocketMessage<?> webSocketMessage) throws Exception {
-        System.out.println(webSocketMessage);
-        // проверяем первую команду
-        // если не устраивает, то close()
-        // webSocketSession.close();
-
         if (webSocketMessage instanceof TextMessage) {
-            // так можем делать mapping
-             var messageFromSocket = mapper.readValue(((TextMessage) webSocketMessage).getPayload(), MessageDto.class);
-             var room = roomsService.findRoomByName(messageFromSocket.getRoomName());
-             if (!room.isPresent()) {
-                 throw new RoomNotFindException();
-             }
-            var roomMembersDto = room.get().getMembersDto();
+            var messageFromSocket = mapper.readValue(((TextMessage) webSocketMessage).getPayload(), MessageDto.class);
+            var roomUsers = roomsService.findUsersInRoomByRoomName(messageFromSocket.getRoomName());
+            if (messageFromSocket.getStatus().equals("MESSAGE")) {
+                var messageEntity = new MessageEntity(
+                        messageFromSocket.getId(),
+                        roomsService.findByRoomName(messageFromSocket.getRoomName()),
+                        userService.findUserEntityByName(messageFromSocket.getAuthorName()),
+                        messageFromSocket.getMessage(),
+                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(messageFromSocket.getCreated())), ZoneId.of("UTC")),
+                        MessageStatus.MESSAGE
+                );
+                messageService.save(messageEntity);
+                var messages = messageService.getAllMessagesByRoom(roomsService.findByRoomName(messageFromSocket.getRoomName()));
+
+                for (Map.Entry<String, WebSocketSession> sessionEntry : sessions.entrySet()) {
+                    for (UserEntity user : roomUsers) {
+                        if (sessionEntry.getValue().getPrincipal().getName().equals(user.getUsername())) {
+                            sessionEntry.getValue().sendMessage(new TextMessage( mapper.writeValueAsString(messages) ));
+                        }
+                    }
+                }
+            } else if (messageFromSocket.getStatus().equals("GET_ALL_CHAT_MESSAGES")) {
+                var messages = messageService.getAllMessagesByRoom(roomsService.findByRoomName(messageFromSocket.getRoomName()));
+
+                if (messages.size() == 0) {
+                    messages.add(new MessageDto(0, "system", messageFromSocket.getRoomName(), "No messages yet", Timestamp.valueOf(LocalDateTime.now()).toString(), "SYSTEM"));
+                }
+
+                webSocketSession.sendMessage(new TextMessage( mapper.writeValueAsString(messages) ));
+            }
 
             // схема для аутентификации
             // Websocket -> HTTP GET (Upgrade) -> Cookies
             // System.out.println(webSocketSession.getPrincipal());
             // можно первой командой получать аутентификационные данные
-            for (Map.Entry<String, WebSocketSession> entry : sessions.entrySet()) {
-                for (MemberDto member : roomMembersDto) {
-                    if (entry.getValue().getPrincipal().getName().equals(member.getUsername())) {
-                        entry.getValue().sendMessage(new TextMessage(((TextMessage) webSocketMessage).getPayload()));
-                    }
-                }
-
-//                if (webSocketSession.getPrincipal().equals(entry.getValue().getPrincipal())) {
-//                    entry.getValue().sendMessage(new TextMessage(((TextMessage) webSocketMessage).getPayload()));
+//            for (Map.Entry<String, WebSocketSession> sessionEntry : sessions.entrySet()) {
+//                for (UserEntity user : roomUsers) {
+//                    if (sessionEntry.getValue().getPrincipal().getName().equals(user.getUsername())) {
+//                        sessionEntry.getValue().sendMessage(new TextMessage(((TextMessage) webSocketMessage).getPayload()));
+//                    }
 //                }
-            }
+//            }
         }
     }
 
@@ -74,7 +98,7 @@ public class WSHandler implements WebSocketHandler {
     // При закрытии: если была ошибка то error, потом close, если не было то просто close
     @Override
     public void afterConnectionClosed(WebSocketSession webSocketSession, CloseStatus closeStatus) throws Exception {
-        System.out.println(closeStatus.getReason());
+        System.out.println("close socket " + closeStatus.getReason());
         System.out.println(closeStatus.getCode());
         sessions.remove(webSocketSession.getId());
     }
