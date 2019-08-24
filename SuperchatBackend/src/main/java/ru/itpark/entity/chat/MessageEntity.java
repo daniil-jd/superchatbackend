@@ -11,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -27,6 +28,6 @@ public class MessageEntity {
     @OneToOne
     private UserEntity author;
     private String content;
-    private OffsetDateTime created;
+    private Timestamp created;
     private MessageStatus status;
 }

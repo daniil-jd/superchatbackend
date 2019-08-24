@@ -32,7 +32,7 @@ public class MessageService {
                         m.getAuthor().getUsername(),
                         m.getRoom().getName(),
                         m.getContent(),
-                        m.getCreated().toString(),
+                        (m.getCreated().getTime()),
                         m.getStatus().toString())
                 ).collect(Collectors.toList())
                 ;

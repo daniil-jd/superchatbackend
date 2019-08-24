@@ -53,7 +53,7 @@ public class WSHandler implements WebSocketHandler {
                         roomsService.findByRoomName(messageFromSocket.getRoomName()),
                         userService.findUserEntityByName(messageFromSocket.getAuthorName()),
                         messageFromSocket.getMessage(),
-                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(messageFromSocket.getCreated())), ZoneId.of("UTC")),
+                        Timestamp.from(Instant.ofEpochMilli((messageFromSocket.getCreated()))),
                         MessageStatus.MESSAGE
                 );
                 messageService.save(messageEntity);
@@ -70,23 +70,11 @@ public class WSHandler implements WebSocketHandler {
                 var messages = messageService.getAllMessagesByRoom(roomsService.findByRoomName(messageFromSocket.getRoomName()));
 
                 if (messages.size() == 0) {
-                    messages.add(new MessageDto(0, "system", messageFromSocket.getRoomName(), "No messages yet", Timestamp.valueOf(LocalDateTime.now()).toString(), "SYSTEM"));
+                    messages.add(new MessageDto(0, "system", messageFromSocket.getRoomName(), "No messages yet", Timestamp.valueOf(LocalDateTime.now()).getTime(), "SYSTEM"));
                 }
 
                 webSocketSession.sendMessage(new TextMessage( mapper.writeValueAsString(messages) ));
             }
-
-            // схема для аутентификации
-            // Websocket -> HTTP GET (Upgrade) -> Cookies
-            // System.out.println(webSocketSession.getPrincipal());
-            // можно первой командой получать аутентификационные данные
-//            for (Map.Entry<String, WebSocketSession> sessionEntry : sessions.entrySet()) {
-//                for (UserEntity user : roomUsers) {
-//                    if (sessionEntry.getValue().getPrincipal().getName().equals(user.getUsername())) {
-//                        sessionEntry.getValue().sendMessage(new TextMessage(((TextMessage) webSocketMessage).getPayload()));
-//                    }
-//                }
-//            }
         }
     }
 

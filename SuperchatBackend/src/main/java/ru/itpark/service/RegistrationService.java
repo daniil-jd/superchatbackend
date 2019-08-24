@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itpark.dto.AuthenticationTokenResponseDto;
 import ru.itpark.dto.RegistrationRequestDto;
 import ru.itpark.entity.token.AuthenticationTokenEntity;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class RegistrationService {
     private final UserRepository userRepository;

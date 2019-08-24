@@ -12,6 +12,6 @@ public class MessageDto {
     private String authorName;
     private String roomName;
     private String message;
-    private String created;
+    private long created;
     private String status;
 }

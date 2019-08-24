@@ -14,7 +14,7 @@ public class DefaultMailService {
     private final JavaMailSender mailSender;
     private final String sender;
     private final String SUBJECT = "Registration in Super-chat (Локализированное сообщение)";
-    private String contentLink = "<a href='http://localhost:8080/api/registration/confirmation?token=%s'>Link must be here (Локализированное сообщение)</a>";
+    private String contentLink = "<a href='http://localhost:3000/registration/confirmation?token=%s&username=%s'>Link must be here (Локализированное сообщение)</a>";
 
     public DefaultMailService(JavaMailSender mailSender, @Value("${spring.mail.username}") String sender) {
         this.mailSender = mailSender;
@@ -22,7 +22,7 @@ public class DefaultMailService {
     }
 
     public void sendRegistrationToken(String to, String username, String token) {
-        sendMimeMessage(sender, to, SUBJECT, String.format(contentLink, token));
+        sendMimeMessage(sender, to, SUBJECT, String.format(contentLink, token, username));
     }
 
     public void sendMimeMessage(String from, String to, String subject, String content) {
