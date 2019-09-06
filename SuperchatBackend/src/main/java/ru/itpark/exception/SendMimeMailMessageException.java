@@ -1,6 +1,6 @@
 package ru.itpark.exception;
 
-public class SendMimeMailMessageException extends RuntimeException {
+public class SendMimeMailMessageException  extends DefaultException {
     public SendMimeMailMessageException() {
     }
 
@@ -18,5 +18,9 @@ public class SendMimeMailMessageException extends RuntimeException {
 
     public SendMimeMailMessageException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    public String getCode() {
+        return "AUTHENTICATION_TOKEN_NOT_FOUND";
     }
 }

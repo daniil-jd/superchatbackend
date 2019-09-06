@@ -12,6 +12,7 @@ import ru.itpark.dto.chat.message.MessageDto;
 import ru.itpark.entity.UserEntity;
 import ru.itpark.entity.chat.MessageEntity;
 import ru.itpark.entity.chat.MessageStatus;
+import ru.itpark.exception.WebSocketException;
 import ru.itpark.service.MessageService;
 import ru.itpark.service.RoomsService;
 import ru.itpark.service.UserService;
@@ -19,8 +20,6 @@ import ru.itpark.service.UserService;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,19 +34,15 @@ public class WSHandler implements WebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession webSocketSession) throws Exception {
-        System.out.println("connected");
         sessions.put(webSocketSession.getId(), webSocketSession);
-        System.out.println(sessions.size());
     }
 
-    // Text, Binary
-    // Jackson -> marshalling/unmarshalling
     @Override
     public void handleMessage(WebSocketSession webSocketSession, WebSocketMessage<?> webSocketMessage) throws Exception {
         if (webSocketMessage instanceof TextMessage) {
             var messageFromSocket = mapper.readValue(((TextMessage) webSocketMessage).getPayload(), MessageDto.class);
             var roomUsers = roomsService.findUsersInRoomByRoomName(messageFromSocket.getRoomName());
-            if (messageFromSocket.getStatus().equals("MESSAGE")) {
+            if (messageFromSocket.getStatus().equalsIgnoreCase(MessageStatus.MESSAGE.name())) {
                 var messageEntity = new MessageEntity(
                         messageFromSocket.getId(),
                         roomsService.findByRoomName(messageFromSocket.getRoomName()),
@@ -66,11 +61,11 @@ public class WSHandler implements WebSocketHandler {
                         }
                     }
                 }
-            } else if (messageFromSocket.getStatus().equals("GET_ALL_CHAT_MESSAGES")) {
+            } else if (messageFromSocket.getStatus().equalsIgnoreCase(MessageStatus.GET_ALL_CHAT_MESSAGES.name())) {
                 var messages = messageService.getAllMessagesByRoom(roomsService.findByRoomName(messageFromSocket.getRoomName()));
 
                 if (messages.size() == 0) {
-                    messages.add(new MessageDto(0, "system", messageFromSocket.getRoomName(), "No messages yet", Timestamp.valueOf(LocalDateTime.now()).getTime(), "SYSTEM"));
+                    messages.add(new MessageDto(0, "system", messageFromSocket.getRoomName(), "No messages yet", Timestamp.valueOf(LocalDateTime.now()).getTime(), MessageStatus.GET_ALL_CHAT_MESSAGES.name()));
                 }
 
                 webSocketSession.sendMessage(new TextMessage( mapper.writeValueAsString(messages) ));
@@ -80,20 +75,21 @@ public class WSHandler implements WebSocketHandler {
 
     @Override
     public void handleTransportError(WebSocketSession webSocketSession, Throwable throwable) throws Exception {
-
+        throw new WebSocketException(throwable.getMessage());
     }
 
-    // При закрытии: если была ошибка то error, потом close, если не было то просто close
     @Override
     public void afterConnectionClosed(WebSocketSession webSocketSession, CloseStatus closeStatus) throws Exception {
-        System.out.println("close socket " + closeStatus.getReason());
-        System.out.println(closeStatus.getCode());
+        if (closeStatus.equals(CloseStatus.SERVER_ERROR)) {
+            throw new WebSocketException(closeStatus.getReason());
+        }
+
         sessions.remove(webSocketSession.getId());
+        webSocketSession.close(closeStatus);
     }
 
     @Override
     public boolean supportsPartialMessages() {
-//    return false;
-        return true; // см. last = true
+        return true;
     }
 }

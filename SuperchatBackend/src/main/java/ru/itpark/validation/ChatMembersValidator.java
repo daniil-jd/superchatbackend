@@ -13,10 +13,10 @@ public class ChatMembersValidator implements ConstraintValidator<ChatMembers, Se
     }
 
     @Override
-    public boolean isValid(Set<UserDto> strings, ConstraintValidatorContext constraintValidatorContext) {
-        if (strings == null) {
+    public boolean isValid(Set<UserDto> members, ConstraintValidatorContext constraintValidatorContext) {
+        if (members == null) {
             return true;
         }
-        return strings.size() > 1;
+        return members.size() > 1;
     }
 }

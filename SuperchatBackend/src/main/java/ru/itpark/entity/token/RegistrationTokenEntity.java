@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class RegistrationTokenEntity {
     @Id
     private String token;
-    @ManyToOne(cascade = {CascadeType.MERGE}) // <- FIX
+    @ManyToOne(cascade = {CascadeType.MERGE})
     private UserEntity user;
     private LocalDateTime created;
 }

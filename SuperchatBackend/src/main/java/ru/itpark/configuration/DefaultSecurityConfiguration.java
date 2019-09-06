@@ -5,6 +5,9 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import ru.itpark.filter.token.DefaultTokenAuthenticationFilter;
 
 @Configuration
+@EnableScheduling
 @EnableWebSecurity
 @RequiredArgsConstructor
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -42,6 +46,7 @@ public class DefaultSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/api/registration/confirmation").anonymous()
                 .antMatchers(HttpMethod.POST, "/api/recovery", "/api/recovery/confirmation*").anonymous()
                 .antMatchers(HttpMethod.GET, "/*").anonymous()
+                .antMatchers("/swagger-ui.html", "/webjars/**", "/swagger-resources/**", "/v2/**").permitAll()
 
                 .antMatchers("/api/iwschat").authenticated()
                 .antMatchers("/api/users").authenticated()
@@ -69,5 +74,10 @@ public class DefaultSecurityConfiguration extends WebSecurityConfigurerAdapter {
         var bean = new LocalValidatorFactoryBean();
         bean.setValidationMessageSource(messageSource);
         return bean;
+    }
+
+    @Bean
+    public TaskScheduler taskScheduler() {
+        return new ConcurrentTaskScheduler();
     }
 }

@@ -1,11 +1,11 @@
 package ru.itpark.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.itpark.dto.chat.room.UserDto;
 import ru.itpark.entity.UserEntity;
+import ru.itpark.exception.UserDoesNotExistException;
 import ru.itpark.repository.UserRepository;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class UserService {
     public UserEntity findUserEntityByName(String name) {
         var userOptional = userRepository.findByUsername(name);
         if (!userOptional.isPresent()) {
-            throw new UsernameNotFoundException(name);
+            throw new UserDoesNotExistException("api.exception.user.not_exist.message");
         }
         return userOptional.get();
     }
@@ -28,5 +28,10 @@ public class UserService {
         var users = userRepository.findAll();
         users.remove(me);
         return users;
+    }
+
+    @Scheduled(fixedRate = 15 * 60 * 1000)
+    public void scheduledDeleteChatUser() {
+        userRepository.deleteUserEntitiesByTime();
     }
 }
