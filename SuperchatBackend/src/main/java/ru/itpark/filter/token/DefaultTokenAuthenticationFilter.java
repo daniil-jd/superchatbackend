@@ -25,6 +25,10 @@ public class DefaultTokenAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         var token = request.getHeader("X-Chat-Token");
 
+        if (token == null && request.getServletPath().equals("/api/iwschat")) {
+            token = request.getParameter("token");
+        }
+
         if (token == null) {
             filterChain.doFilter(request, response);
             return;

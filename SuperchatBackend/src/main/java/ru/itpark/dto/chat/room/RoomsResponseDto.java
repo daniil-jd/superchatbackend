@@ -13,6 +13,6 @@ import java.util.List;
 public class RoomsResponseDto {
     private String name;
     private String icon;
-    private MemberDto creator;
-    private List<MemberDto> members = new ArrayList<>();
+    private UserDto creator;
+    private List<UserDto> users = new ArrayList<>();
 }

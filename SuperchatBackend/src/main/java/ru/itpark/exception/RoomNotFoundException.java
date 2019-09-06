@@ -1,7 +1,7 @@
 package ru.itpark.exception;
 
-public class EmptyChatMembersException  extends DefaultException {
-    public EmptyChatMembersException(String message) {
+public class RoomNotFoundException  extends DefaultException {
+    public RoomNotFoundException(String message) {
         super(message);
     }
 

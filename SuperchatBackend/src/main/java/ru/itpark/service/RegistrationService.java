@@ -1,18 +1,18 @@
 package ru.itpark.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.itpark.dto.AuthenticationTokenResponseDto;
 import ru.itpark.dto.RegistrationRequestDto;
-import ru.itpark.entity.chat.MemberEntity;
 import ru.itpark.entity.token.AuthenticationTokenEntity;
 import ru.itpark.entity.token.RegistrationTokenEntity;
 import ru.itpark.entity.UserEntity;
 import ru.itpark.exception.*;
 import ru.itpark.repository.AuthenticationTokenRepository;
-import ru.itpark.repository.MemberRepository;
 import ru.itpark.repository.RegistrationTokenRepository;
 import ru.itpark.repository.UserRepository;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class RegistrationService {
     private final UserRepository userRepository;
@@ -28,7 +29,6 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final DefaultMailService mailService;
     private final AuthenticationTokenRepository authenticationTokenRepository;
-    private final MemberRepository memberRepository;
 
     private final String ROLE_USER = "ROLE_USER";
 
@@ -58,16 +58,14 @@ public class RegistrationService {
             registrationTokenRepository.save(token);
 
             //mail send to user
-            mailService.sendRegistrationToken("mailfrreg@yandex.ru", user.getUsername(), tokenValue);
-            //create chat user
-            memberRepository.save(new MemberEntity(0, null, user));
+            mailService.sendRegistrationToken(user.getUsername(), tokenValue);
         } else {
             if (userOptional.get().isEnabled()) {
-                throw new UsernameAlreadyExistsException(dto.getUsername());
+                throw new UsernameAlreadyExistsException("api.exception.user.username.already_exist.message");
             }
 
             if (registrationTokenRepository.findAllByUserId(userOptional.get().getId()).size() >= 3) {
-                throw new TooManyRegistrationRequestsException();
+                throw new TooManyRegistrationRequestsException("api.exception.registration.too_many_requests.message");
             }
 
             var token = new RegistrationTokenEntity(
@@ -79,9 +77,7 @@ public class RegistrationService {
             registrationTokenRepository.save(token);
 
             //mail token send
-            mailService.sendRegistrationToken("mailfrreg@yandex.ru", userOptional.get().getUsername(), tokenValue);
-            //create chat user
-            memberRepository.save(new MemberEntity(0, null, userOptional.get()));
+            mailService.sendRegistrationToken(userOptional.get().getUsername(), tokenValue);
         }
 
 
@@ -91,16 +87,16 @@ public class RegistrationService {
         var token = registrationTokenRepository.findById(tokenValue);
 
         if (token.isEmpty()) {
-            throw new AuthenticationTokenNotFoundException();
+            throw new AuthenticationTokenNotFoundException("api.exception.authenticate.token.not_found.message");
         }
 
         var user = token.get().getUser();
         if (registrationTokenRepository.findAllByUserId(user.getId()).size() >= 3) {
-            throw new TooManyConfirmationRequestsException();
+            throw new TooManyConfirmationRequestsException("api.exception.registration.confirmation.too_many_requests.message");
         }
 
         if (user.isEnabled()) {
-            throw new UserAlreadyEnabledException();
+            throw new UserAlreadyEnabledException("api.exception.user.already_enabled.message");
         }
 
         user.setEnabled(true);
@@ -109,5 +105,10 @@ public class RegistrationService {
         var tokenEntity = new AuthenticationTokenEntity(authToken, user);
         authenticationTokenRepository.save(tokenEntity);
         return new AuthenticationTokenResponseDto(authToken);
+    }
+
+    @Scheduled(fixedRate = 15 * 60 * 1000)
+    public void scheduledDeleteRegistrationToken() {
+        registrationTokenRepository.deleteRegistrationTokenEntityByTime();
     }
 }

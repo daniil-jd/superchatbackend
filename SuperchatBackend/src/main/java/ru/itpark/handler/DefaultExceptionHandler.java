@@ -3,7 +3,6 @@ package ru.itpark.handler;
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
 import ru.itpark.dto.exception.ErrorDto;
 import ru.itpark.dto.exception.ExceptionResponseDto;
-import ru.itpark.exception.AuthenticateTokenException;
+import ru.itpark.exception.DefaultException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -40,11 +39,13 @@ public class DefaultExceptionHandler extends AbstractErrorController {
         var webRequest = new ServletWebRequest(request);
         var exception = errorAttributes.getError(webRequest);
         var status = getStatus(request);
-        var defaultMessage = "default message";
+        var defaultMessage = messageSource.getMessage("api.exception.default.message", null, locale);
 
-        if (exception == null) {
-            return ResponseEntity.status(status).body(new ExceptionResponseDto("UNKNOWN_EXCEPTION", defaultMessage, Collections.emptyList()));
-        }
+        var exceptionBody = new ExceptionResponseDto(
+                "UNKNOWN_EXCEPTION",
+                defaultMessage,
+                Collections.emptyList()
+        );
 
         if (exception instanceof MethodArgumentNotValidException) {
             var fieldErrorsList = ((MethodArgumentNotValidException) exception).getBindingResult().getFieldErrors();
@@ -53,24 +54,25 @@ public class DefaultExceptionHandler extends AbstractErrorController {
                 errorDtoList.add(new ErrorDto(error.getField(), error.getDefaultMessage()));
             }
 
-            return ResponseEntity.status(status).body(
-                    new ExceptionResponseDto(
-                            "VALIDATION_EXCEPTION",
-                            messageSource.getMessage(
-                                    exception.getMessage(),
-                                    null,
-                                    defaultMessage,
-                                    locale),
-                            errorDtoList
-                    )
+            exceptionBody = new ExceptionResponseDto(
+                    "VALIDATION_EXCEPTION",
+                    messageSource.getMessage(
+                            "api.exception.validation.message",
+                            null,
+                            locale),
+                    errorDtoList
             );
-        } else if (exception instanceof AuthenticateTokenException) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new ExceptionResponseDto("INVALID_TOKEN", exception.getMessage(), null)
-            );
+        } else {
+            if (exception instanceof DefaultException) {
+                exceptionBody = new ExceptionResponseDto(
+                        ((DefaultException) exception).getCode(),
+                        messageSource.getMessage(exception.getMessage(), null, locale),
+                        null
+                );
+            }
         }
 
-        return ResponseEntity.status(status).body(new ExceptionResponseDto("UNKNOWN_EXCEPTION", defaultMessage, Collections.emptyList()));
+        return ResponseEntity.status(status).body(exceptionBody);
     }
 
     @Override

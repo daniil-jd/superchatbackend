@@ -20,11 +20,11 @@ public class DefaultAuthenticationInFilterService implements TokenService {
         var token = authentication.getPrincipal();
 
         if (token == null) {
-            throw new AuthenticateTokenException("Token must be not null.");
+            throw new AuthenticateTokenException("api.exception.authenticate.token.null.message");
         }
         var tokenEntity = authenticationTokenRepository
                 .findById(token.toString())
-                .orElseThrow(() -> new AuthenticateTokenException("Invalid token."));
+                .orElseThrow(() -> new AuthenticateTokenException("api.exception.authenticate.token.invalid.message"));
         var userEntity = tokenEntity.getUser();
 
         return new UsernamePasswordAuthenticationToken(

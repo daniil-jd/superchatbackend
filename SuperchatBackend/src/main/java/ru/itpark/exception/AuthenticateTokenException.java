@@ -1,8 +1,11 @@
 package ru.itpark.exception;
 
-public class AuthenticateTokenException extends RuntimeException {
+public class AuthenticateTokenException extends DefaultException {
+    public AuthenticateTokenException(String message) {
+        super(message);
+    }
 
-    public AuthenticateTokenException(String msg) {
-        super(msg);
+    public String getCode() {
+        return "INVALID_TOKEN";
     }
 }

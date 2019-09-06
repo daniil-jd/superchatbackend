@@ -1,7 +1,7 @@
 package ru.itpark.exception;
 
-public class EmptyChatMembersException  extends DefaultException {
-    public EmptyChatMembersException(String message) {
+public class UserDoesNotExistException  extends DefaultException {
+    public UserDoesNotExistException(String message) {
         super(message);
     }
 

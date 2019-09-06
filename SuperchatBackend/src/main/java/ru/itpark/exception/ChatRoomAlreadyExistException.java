@@ -1,10 +1,9 @@
 package ru.itpark.exception;
 
-public class EmptyChatMembersException  extends DefaultException {
-    public EmptyChatMembersException(String message) {
+public class ChatRoomAlreadyExistException  extends DefaultException {
+    public ChatRoomAlreadyExistException(String message) {
         super(message);
     }
-
     public String getCode() {
         return "AUTHENTICATION_TOKEN_NOT_FOUND";
     }
