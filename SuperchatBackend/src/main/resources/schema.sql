@@ -66,10 +66,6 @@ create table IF NOT EXISTS CHAT_ROOM_USERS
 )
 ;
 
-create unique index PRIMARY_KEY_B
-	on CHAT_USER (ID)
-;
-
 drop table IF EXISTS ITPARK.REGISTRATION_TOKEN
 ;
 
